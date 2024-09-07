@@ -5,9 +5,15 @@ const bcrypt = require("bcrypt");
 const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 const { storage } = require("./firebaseConfig");
 const admin = require('./firebaseAdmin');
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+
+// const corsOptions = {
+    
+// }
+app.use(cors());
 
 // Kapak fotoğrafları ve diğer dosyalar için multer'ı ayarla
 const multerStorage = multer.memoryStorage(); // Multer için farklı bir isim kullan
