@@ -99,7 +99,7 @@ app.post("/api/blog", upload.single("coverImage"), async (req, res) => {
             {
                 title,
                 created_by: author,
-                content: JSON.parse(content), // JSON formatında saklanan content
+                content: content, // JSON formatında saklanan content
                 cover_image_url: coverImageUrl, // Cover image URL Firebase Storage URL ile
             },
         ]);
