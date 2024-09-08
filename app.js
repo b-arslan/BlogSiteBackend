@@ -73,13 +73,13 @@ app.post("/api/login", async (req, res) => {
 });
 
 // 3. API: Blogları DB'ye Kaydet ve Kapak Fotoğrafını Firebase Storage'a Yükle
-app.post("/api/blog", upload.fields([{ name: 'coverImage' }, { name: 'video' }]), async (req, res) => {
+app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }*/]), async (req, res) => {
     const { title, author, content } = req.body;
     const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
-    const videoFile = req.files['video'] ? req.files['video'][0] : null;
+    //const videoFile = req.files['video'] ? req.files['video'][0] : null;
 
     let coverImageUrl = null;
-    let videoUrl = null;
+    //let videoUrl = null;
 
     if (coverImage) {
         try {
@@ -91,15 +91,15 @@ app.post("/api/blog", upload.fields([{ name: 'coverImage' }, { name: 'video' }])
         }
     }
 
-    if (videoFile) {
-        try {
-            const storageRef = ref(storage, `videos/${videoFile.originalname}`);
-            const snapshot = await uploadBytes(storageRef, videoFile.buffer);
-            videoUrl = await getDownloadURL(snapshot.ref);
-        } catch (error) {
-            return res.status(500).json({ success: false, message: "Video yüklenemedi", error: error.message });
-        }
-    }
+    //if (videoFile) {
+    //    try {
+    //        const storageRef = ref(storage, `videos/${videoFile.originalname}`);
+    //        const snapshot = await uploadBytes(storageRef, videoFile.buffer);
+    //        videoUrl = await getDownloadURL(snapshot.ref);
+    //    } catch (error) {
+    //        return res.status(500).json({ success: false, message: "Video yüklenemedi", error: error.message });
+    //    }
+    //}
 
     try {
         const { data, error } = await supabase.from("BlogPosts").insert([
@@ -108,7 +108,7 @@ app.post("/api/blog", upload.fields([{ name: 'coverImage' }, { name: 'video' }])
                 created_by: author,
                 content,
                 cover_image_url: coverImageUrl,
-                video_url: videoUrl
+                //video_url: videoUrl
             },
         ]);
 
