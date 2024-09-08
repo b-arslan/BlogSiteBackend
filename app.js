@@ -18,8 +18,7 @@ app.use(express.json());
 // }
 app.use(cors());
 
-// Kapak fotoğrafları ve diğer dosyalar için multer'ı ayarla
-const multerStorage = multer.memoryStorage(); // Multer için farklı bir isim kullan
+const multerStorage = multer.memoryStorage();
 const upload = multer({ 
   storage: multerStorage, 
   limits: { fileSize: 100 * 1024 * 1024 } // Limit to 100MB 
@@ -27,7 +26,6 @@ const upload = multer({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 1. API: BlogPosts Table'dan Verileri Al
 app.get("/api/blogposts", async (req, res) => {
     const { data, error } = await supabase.from("BlogPosts").select("*");
 
@@ -43,11 +41,9 @@ app.get("/api/blogposts", async (req, res) => {
     res.json({ success: true, content: data });
 });
 
-// 2. API: Login - adminusers Table'dan Verileri Kontrol Et
 app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
 
-    // Kullanıcının emailine göre hash'lenmiş şifreyi al
     const { data, error } = await supabase
         .from("adminusers")
         .select("password")
@@ -64,7 +60,6 @@ app.post("/api/login", async (req, res) => {
 
     const hashedPassword = data[0].password;
 
-    // Kullanıcıdan gelen şifreyi hash ile karşılaştır
     const isMatch = await bcrypt.compare(password, hashedPassword);
 
     if (!isMatch) {
@@ -75,7 +70,6 @@ app.post("/api/login", async (req, res) => {
     res.json({ success: true, message: "Başarıyla giriş yapıldı" });
 });
 
-// 3. API: Blogları DB'ye Kaydet ve Kapak Fotoğrafını Firebase Storage'a Yükle
 app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }*/]), async (req, res) => {
     const { title, author, content } = req.body;
     const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
@@ -175,8 +169,8 @@ app.post("/api/contact", async (req, res) => {
     const { name, email, message } = req.body;
 
     const mg = mailgun({
-        apiKey: process.env.MAILGUN_API_KEY, // Mailgun API key
-        domain: process.env.MAILGUN_DOMAIN, // Mailgun domain
+        apiKey: process.env.MAILGUN_API_KEY,
+        domain: process.env.MAILGUN_DOMAIN, 
     });
 
     const mailOptions = {
