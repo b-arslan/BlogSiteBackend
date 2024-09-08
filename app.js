@@ -139,3 +139,30 @@ const PORT = process.env.PORT || 9001;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+// New route for uploading content images
+app.post("/api/upload-image", upload.single("image"), async (req, res) => {
+    const image = req.file;
+
+    if (!image) {
+        return res.status(400).json({
+            success: false,
+            message: "No image file provided",
+        });
+    }
+
+    try {
+        const storageRef = ref(storage, `contentImages/${image.originalname}`);
+        const snapshot = await uploadBytes(storageRef, image.buffer);
+        const imageUrl = await getDownloadURL(snapshot.ref); // Get the URL for the uploaded image
+
+        return res.json({ success: true, url: imageUrl });
+    } catch (error) {
+        console.error("Firebase Storage Upload Error: ", error);
+        return res.status(500).json({
+            success: false,
+            message: "Image upload failed",
+            error: error.message,
+        });
+    }
+});
