@@ -17,7 +17,12 @@ app.use(cors());
 
 // Kapak fotoğrafları ve diğer dosyalar için multer'ı ayarla
 const multerStorage = multer.memoryStorage(); // Multer için farklı bir isim kullan
-const upload = multer({ storage: multerStorage });
+const upload = multer({ 
+  storage: multerStorage, 
+  limits: { fileSize: 100 * 1024 * 1024 } // Limit to 100MB 
+});
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // 1. API: BlogPosts Table'dan Verileri Al
 app.get("/api/blogposts", async (req, res) => {
