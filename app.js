@@ -68,63 +68,55 @@ app.post("/api/login", async (req, res) => {
 });
 
 // 3. API: Blogları DB'ye Kaydet ve Kapak Fotoğrafını Firebase Storage'a Yükle
-app.post("/api/blog", upload.single("coverImage"), async (req, res) => {
+app.post("/api/blog", upload.fields([{ name: 'coverImage' }, { name: 'video' }]), async (req, res) => {
     const { title, author, content } = req.body;
-    const coverImage = req.file;
+    const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
+    const videoFile = req.files['video'] ? req.files['video'][0] : null;
 
     let coverImageUrl = null;
+    let videoUrl = null;
+
     if (coverImage) {
         try {
-            const storageRef = ref(
-                storage,
-                `coverImages/${coverImage.originalname}`
-            );
+            const storageRef = ref(storage, `coverImages/${coverImage.originalname}`);
             const snapshot = await uploadBytes(storageRef, coverImage.buffer);
-            coverImageUrl = await getDownloadURL(snapshot.ref); // Dosya URL'sini al
-            console.log("Image uploaded successfully: ", coverImageUrl);
+            coverImageUrl = await getDownloadURL(snapshot.ref);
         } catch (error) {
-            console.error("Firebase Storage Upload Error: ", error);
-            res.status(500).json({
-                success: false,
-                message: "Kapak fotoğrafı yüklenirken hata oluştu",
-                error: error.message,
-            });
-            return;
+            return res.status(500).json({ success: false, message: "Kapak fotoğrafı yüklenemedi", error: error.message });
         }
     }
 
-    // Blog içeriğini ve kapak fotoğrafının URL'sini veritabanına kaydet
+    if (videoFile) {
+        try {
+            const storageRef = ref(storage, `videos/${videoFile.originalname}`);
+            const snapshot = await uploadBytes(storageRef, videoFile.buffer);
+            videoUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+            return res.status(500).json({ success: false, message: "Video yüklenemedi", error: error.message });
+        }
+    }
+
     try {
         const { data, error } = await supabase.from("BlogPosts").insert([
             {
                 title,
                 created_by: author,
-                content: content, // JSON formatında saklanan content
-                cover_image_url: coverImageUrl, // Cover image URL Firebase Storage URL ile
+                content,
+                cover_image_url: coverImageUrl,
+                video_url: videoUrl
             },
         ]);
 
         if (error) {
-            console.error("Supabase DB Insert Error: ", error);
-            res.status(500).json({
-                success: false,
-                message: "Blog kaydedilirken hata oluştu",
-                error: error.message,
-            });
-            return;
+            return res.status(500).json({ success: false, message: "Blog kaydedilemedi", error: error.message });
         }
 
-        console.log("Blog saved successfully: ", data);
         res.json({ success: true, message: "Blog başarıyla kaydedildi", data });
     } catch (err) {
-        console.error("Exception during blog insert: ", err);
-        res.status(500).json({
-            success: false,
-            message: "Blog kaydedilirken beklenmeyen hata oluştu",
-            error: err.message,
-        });
+        res.status(500).json({ success: false, message: "Blog kaydedilirken hata oluştu", error: err.message });
     }
 });
+
 
 app.post("/api/create-admin", async (req, res) => {
     const { uid } = req.body;
