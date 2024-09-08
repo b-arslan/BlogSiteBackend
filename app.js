@@ -7,6 +7,8 @@ const { storage } = require("./firebaseConfig");
 const admin = require('./firebaseAdmin');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
+const mailgun = require("mailgun-js");
+
 
 const app = express();
 app.use(express.json());
@@ -172,28 +174,20 @@ app.post("/api/upload-image", upload.single("image"), async (req, res) => {
 app.post("/api/contact", async (req, res) => {
     const { name, email, message } = req.body;
 
-    // Nodemailer configuration
-    const transporter = nodemailer.createTransport({
-        host: "smtpout.secureserver.net", // GoDaddy SMTP server
-        port: 465,
-        secure: true,
-        auth: {
-            user: process.env.EMAIL, // Your corporate email
-            pass: process.env.EMAIL_PASSWORD, // Your email password
-        },
+    const mg = mailgun({
+        apiKey: process.env.MAILGUN_API_KEY, // Mailgun API key
+        domain: process.env.MAILGUN_DOMAIN, // Mailgun domain
     });
 
-    // Email options
     const mailOptions = {
-        from: `"${name}" <${email}>`, // Sender's email
-        to: process.env.EMAIL, // Your corporate email
-        subject: "Web Sitesinden Yeni Email",
-        text: `Name: ${name}\n\nEmail: ${email}\n\n\nMessage:\n${message}`,
+        from: `"${name}" <${email}>`,
+        to: process.env.EMAIL,
+        subject: "New Contact Form Submission",
+        text: `Name: ${name}\n\nEmail: ${email}\n\nMessage:\n${message}`,
     };
 
     try {
-        // Send the email
-        await transporter.sendMail(mailOptions);
+        await mg.messages().send(mailOptions);
         res.status(200).json({ success: true, message: "Message sent successfully!" });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to send message", error: error.message });
