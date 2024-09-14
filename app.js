@@ -6,8 +6,9 @@ const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
 const { storage } = require("./firebaseConfig");
 const admin = require('./firebaseAdmin');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
-const mailgun = require("mailgun-js");
+const mammoth = require("mammoth");
+const { parseDocument } = require("htmlparser2");
+const { DomUtils } = require("htmlparser2");
 
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.json());
 // const corsOptions = {
     
 // }
+
 app.use(cors());
 
 const multerStorage = multer.memoryStorage();
@@ -120,23 +122,6 @@ app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }
 });
 
 
-app.post("/api/create-admin", async (req, res) => {
-    const { uid } = req.body;
-
-    try {
-        await admin.auth().setCustomUserClaims(uid, { admin: true });
-        const customToken = await admin.auth().createCustomToken(uid);
-        res.json({ success: true, token: customToken });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Admin kullanıcı oluşturulurken hata oluştu", error: error.message });
-    }
-});
-
-const PORT = process.env.PORT || 9001;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
-
 // New route for uploading content images
 app.post("/api/upload-image", upload.single("image"), async (req, res) => {
     const image = req.file;
@@ -164,26 +149,60 @@ app.post("/api/upload-image", upload.single("image"), async (req, res) => {
     }
 });
 
-// Contact form API route
-app.post("/api/contact", async (req, res) => {
-    const { name, email, message } = req.body;
 
-    const mg = mailgun({
-        apiKey: process.env.MAILGUN_API_KEY,
-        domain: process.env.MAILGUN_DOMAIN, 
-    });
+// New route to handle Word document uploads and processing
+app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
+    const wordFile = req.file;
 
-    const mailOptions = {
-        from: `"${name}" <${email}>`,
-        to: process.env.EMAIL,
-        subject: "New Contact Form Submission",
-        text: `Name: ${name}\n\nEmail: ${email}\n\nMessage:\n${message}`,
-    };
+    if (!wordFile) {
+        return res.status(400).json({
+            success: false,
+            message: "No Word document provided",
+        });
+    }
 
     try {
-        await mg.messages().send(mailOptions);
-        res.status(200).json({ success: true, message: "Message sent successfully!" });
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Failed to send message", error: error.message });
+        // Convert the Word document to HTML using mammoth
+        const { value: htmlContent } = await mammoth.convertToHtml({ buffer: wordFile.buffer });
+
+        // Parse HTML content to handle images
+        const dom = parseDocument(htmlContent);
+        const images = DomUtils.findAll(elem => elem.name === 'img', dom.children);
+
+        // Upload images to Firebase and replace src with Firebase URLs
+        for (let img of images) {
+            const imageBuffer = Buffer.from(img.attribs.src.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+            const imageName = `contentImages/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
+            const storageRef = ref(storage, imageName);
+
+            const snapshot = await uploadBytes(storageRef, imageBuffer);
+            const imageUrl = await getDownloadURL(snapshot.ref);
+
+            img.attribs.src = imageUrl; // Replace src with the Firebase URL
+        }
+
+        // Get updated HTML with images replaced by Firebase URLs
+        const updatedHtmlContent = DomUtils.getOuterHTML(dom);
+
+        // Extract the title (first h1 tag) and the rest of the content
+        const titleElem = DomUtils.findOne(elem => elem.name === 'h1', dom.children);
+        const title = titleElem ? DomUtils.getText(titleElem) : "Untitled Blog";
+
+        // Store the modified content and title in the database
+        const { data, error } = await supabase.from("BlogPosts").insert([
+            {
+                title,
+                content: updatedHtmlContent,
+                created_by: "author", // Replace with actual author info
+            },
+        ]);
+
+        if (error) {
+            return res.status(500).json({ success: false, message: "Blog could not be saved", error: error.message });
+        }
+
+        res.json({ success: true, message: "Blog successfully created from Word document", data });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Error processing Word document", error: err.message });
     }
 });
