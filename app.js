@@ -13,12 +13,11 @@ const { DomUtils } = require("htmlparser2");
 
 const app = express();
 app.use(express.json());
-
-// const corsOptions = {
-    
-// }
-
-app.use(cors());
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://www.mehmetaker.com'], // allow localhost for development
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 const multerStorage = multer.memoryStorage();
 const upload = multer({ 
