@@ -192,7 +192,7 @@ app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
             {
                 title,
                 content: updatedHtmlContent,
-                created_by: "author", // Replace with actual author info
+                created_by: "Mehmet Aker", // Replace with actual author info
             },
         ]);
 
