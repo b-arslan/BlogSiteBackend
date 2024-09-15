@@ -13,11 +13,11 @@ const { DomUtils } = require("htmlparser2");
 
 const app = express();
 app.use(express.json());
-const corsOptions = {
-  origin: ['http://localhost:3000', 'https://www.mehmetaker.com'], // allow localhost for development
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//   origin: ['http://localhost:3000', 'https://www.mehmetaker.com'], // allow localhost for development
+//   optionsSuccessStatus: 200
+// };
+app.use(cors());
 
 const multerStorage = multer.memoryStorage();
 const upload = multer({ 
@@ -205,3 +205,5 @@ app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
         res.status(500).json({ success: false, message: "Error processing Word document", error: err.message });
     }
 });
+
+module.exports = app;
