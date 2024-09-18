@@ -39,7 +39,7 @@ app.get("/api/blogposts", async (req, res) => {
         return;
     }
 
-    res.json({ success: true, content: data });
+    res.status(200).json({ success: true, content: data });
 });
 
 app.post("/api/login", async (req, res) => {
@@ -192,7 +192,7 @@ app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
             {
                 title,
                 content: updatedHtmlContent,
-                created_by: "Mehmet Aker", // Replace with actual author info
+                created_by: "Mehmet Aker",
             },
         ]);
 
