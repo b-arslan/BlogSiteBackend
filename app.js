@@ -19,6 +19,9 @@ app.use(express.json());
 // };
 app.use(cors());
 
+// ETag disabled
+app.disable('etag');
+
 const multerStorage = multer.memoryStorage();
 const upload = multer({ 
   storage: multerStorage, 
@@ -38,7 +41,8 @@ app.get("/api/blogposts", async (req, res) => {
         });
         return;
     }
-
+    
+    res.setHeader('Cache-Control', 'no-store');
     res.status(200).json({ success: true, content: data });
 });
 
