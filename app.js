@@ -72,7 +72,8 @@ app.post("/api/login", async (req, res) => {
         return;
     }
 
-    res.json({ success: true, message: "Başarıyla giriş yapıldı" });
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, message: "Başarıyla giriş yapıldı" });
 });
 
 app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }*/]), async (req, res) => {
@@ -117,8 +118,8 @@ app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }
         if (error) {
             return res.status(500).json({ success: false, message: "Blog kaydedilemedi", error: error.message });
         }
-
-        res.json({ success: true, message: "Blog başarıyla kaydedildi", data });
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(200).json({ success: true, message: "Blog başarıyla kaydedildi", data });
     } catch (err) {
         res.status(500).json({ success: false, message: "Blog kaydedilirken hata oluştu", error: err.message });
     }
@@ -203,8 +204,8 @@ app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
         if (error) {
             return res.status(500).json({ success: false, message: "Blog could not be saved", error: error.message });
         }
-
-        res.json({ success: true, message: "Blog successfully created from Word document", data });
+        res.setHeader('Cache-Control', 'no-store');
+        res.status(200).json({ success: true, message: "Blog successfully created from Word document", data });
     } catch (err) {
         res.status(500).json({ success: false, message: "Error processing Word document", error: err.message });
     }
