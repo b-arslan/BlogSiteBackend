@@ -41,9 +41,40 @@ app.get("/api/blogposts", async (req, res) => {
         });
         return;
     }
-    
+
+    // Firebase URL'si yerine proxy URL'sini döndür
+    const modifiedData = data.map(blog => {
+        if (blog.cover_image_url) {
+            const imageName = blog.cover_image_url.split('/').pop(); // Dosya adını al
+            blog.cover_image_url = `/images/${imageName}`; // Proxy edilen URL
+        }
+        return blog;
+    });
+
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ success: true, content: data });
+    res.status(200).json({ success: true, message: 'Veriler başarıyla getirildi.' , content: modifiedData });
+});
+
+app.get("/images/:filename", async (req, res) => {
+    const filename = req.params.filename;
+    const storageRef = ref(storage, `coverImages/${filename}`);
+
+    try {
+        const downloadUrl = await getDownloadURL(storageRef);
+        const response = await fetch(downloadUrl);
+        
+        // Content-Type'ı response'tan alıyoruz
+        const contentType = response.headers.get('content-type');
+        
+        // Görsel verisini buffer olarak alıyoruz
+        const imageBuffer = await response.buffer();
+
+        // Dinamik olarak Content-Type ayarla (image/jpeg, image/png, vb.)
+        res.setHeader('Content-Type', contentType);
+        res.send(imageBuffer);
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Image could not be retrieved", error: error.message });
+    }
 });
 
 app.post("/api/login", async (req, res) => {
