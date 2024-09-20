@@ -211,15 +211,16 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
         paragraphs.forEach(p => {
             // Boş satırları ve paragraf aralarındaki boşlukları koruma
             if (DomUtils.getText(p).trim() === '') {
-                p.attribs.style = (p.attribs.style || '') + 'min-height:20px;'; // Boş satırlar için minimum height ekle
+                p.attribs.style = (p.attribs.style || '') + 'min-height:20px;margin-bottom:15px;'; // Boş satırlar için minimum height ve margin ekle
+            } else {
+                p.attribs.style = (p.attribs.style || '') + 'font-size:18px;line-height:1.8;margin-bottom:15px;'; // Font size ve line-height artır
             }
-            p.attribs.style = (p.attribs.style || '') + 'font-size:18px;'; // Font size artır
         });
 
         // Boşluk ve hizalamaları koruma (Madde işaretleri, numaralı listeler için)
         const lists = DomUtils.findAll(elem => ['ul', 'ol'].includes(elem.name), dom.children);
         lists.forEach(list => {
-            list.attribs.style = (list.attribs.style || '') + 'margin-left: 40px; font-size:18px;'; // Liste öğelerine hizalama ve font size ekle
+            list.attribs.style = (list.attribs.style || '') + 'margin-left: 40px; font-size:18px;line-height:1.8;'; // Liste öğelerine hizalama, font size ve line-height ekle
         });
 
         // Firebase'e yüklenen görselleri değiştirme işlemi
