@@ -155,25 +155,40 @@ app.post("/api/upload-image", upload.single("image"), async (req, res) => {
 
 
 // New route to handle Word document uploads and processing
-app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
-    const wordFile = req.file;
+app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFile' }]), async (req, res) => {
+    const wordFile = req.files['wordFile'] ? req.files['wordFile'][0] : null;
+    const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
 
     if (!wordFile) {
         return res.status(400).json({
             success: false,
-            message: "No Word document provided",
+            message: "Word belgesi sağlanmadı",
         });
     }
 
+    let coverImageUrl = null;
+
+    // Kapak fotoğrafı Firebase'e yükle
+    if (coverImage) {
+        try {
+            const coverImageName = `coverImages/${Date.now()}_${coverImage.originalname}`;
+            const coverImageRef = ref(storage, coverImageName);
+            const snapshot = await uploadBytes(coverImageRef, coverImage.buffer);
+            coverImageUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+            return res.status(500).json({ success: false, message: "Kapak fotoğrafı yüklenemedi", error: error.message });
+        }
+    }
+
     try {
-        // Convert the Word document to HTML using mammoth
+        // Mammoth ile Word dosyasını HTML formatına çevir
         const { value: htmlContent } = await mammoth.convertToHtml({ buffer: wordFile.buffer });
 
-        // Parse HTML content to handle images
+        // HTML'yi parse edip görselleri bul
         const dom = parseDocument(htmlContent);
         const images = DomUtils.findAll(elem => elem.name === 'img', dom.children);
 
-        // Upload images to Firebase and replace src with Firebase URLs
+        // Görselleri Firebase'e yükleyip, kaynaklarını Firebase URL'leri ile değiştir
         for (let img of images) {
             const imageBuffer = Buffer.from(img.attribs.src.replace(/^data:image\/\w+;base64,/, ""), 'base64');
             const imageName = `contentImages/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
@@ -182,32 +197,33 @@ app.post("/api/wordBlog", upload.single('wordFile'), async (req, res) => {
             const snapshot = await uploadBytes(storageRef, imageBuffer);
             const imageUrl = await getDownloadURL(snapshot.ref);
 
-            img.attribs.src = imageUrl; // Replace src with the Firebase URL
+            img.attribs.src = imageUrl; // Firebase URL ile değiştir
         }
 
-        // Get updated HTML with images replaced by Firebase URLs
+        // Güncellenmiş HTML içeriğini al
         const updatedHtmlContent = DomUtils.getOuterHTML(dom);
 
-        // Extract the title (first h1 tag) and the rest of the content
+        // İlk h1 etiketini başlık olarak al
         const titleElem = DomUtils.findOne(elem => elem.name === 'h1', dom.children);
-        const title = titleElem ? DomUtils.getText(titleElem) : "Untitled Blog";
+        const title = titleElem ? DomUtils.getText(titleElem) : "Başlıksız Blog";
 
-        // Store the modified content and title in the database
+        // Supabase'e kaydet
         const { data, error } = await supabase.from("BlogPosts").insert([
             {
                 title,
                 content: updatedHtmlContent,
                 created_by: "Mehmet Aker",
+                cover_image_url: coverImageUrl, // Kapak fotoğrafı URL'sini ekle
             },
         ]);
 
         if (error) {
-            return res.status(500).json({ success: false, message: "Blog could not be saved", error: error.message });
+            return res.status(500).json({ success: false, message: "Blog kaydedilemedi", error: error.message });
         }
-        res.setHeader('Cache-Control', 'no-store');
-        res.status(200).json({ success: true, message: "Blog successfully created from Word document", data });
+
+        res.status(200).json({ success: true, message: "Word belgesinden blog başarıyla oluşturuldu", data });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Error processing Word document", error: err.message });
+        res.status(500).json({ success: false, message: "Word belgesi işlenirken hata oluştu", error: err.message });
     }
 });
 
