@@ -162,7 +162,7 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
     if (!wordFile) {
         return res.status(400).json({
             success: false,
-            message: "Word belgesi sağlanmadı",
+            message: "No Word document provided",
         });
     }
 
@@ -182,13 +182,44 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
 
     try {
         // Mammoth ile Word dosyasını HTML formatına çevir
-        const { value: htmlContent } = await mammoth.convertToHtml({ buffer: wordFile.buffer });
+        const { value: htmlContent } = await mammoth.convertToHtml({
+            buffer: wordFile.buffer,
+            styleMap: [
+                "p => p:fresh",  // Paragrafları HTML p tagine çevir
+                "h1 => h1:fresh", // Heading1'i al, ama içerikte temizleyeceğiz
+                "ul => ul:fresh", // Madde işaretli listeler
+                "ol => ol:fresh", // Numaralı listeler
+                "li => li:fresh", // Liste öğeleri
+                "strong => strong", // Kalın yazılar
+                "em => em" // İtalik yazılar
+            ]
+        });
 
-        // HTML'yi parse edip görselleri bul
+        // HTML içeriğini parse et
         const dom = parseDocument(htmlContent);
-        const images = DomUtils.findAll(elem => elem.name === 'img', dom.children);
 
-        // Görselleri Firebase'e yükleyip, kaynaklarını Firebase URL'leri ile değiştir
+        // Heading1 başlığını temizle
+        const titleElem = DomUtils.findOne(elem => elem.name === 'h1', dom.children);
+        const title = titleElem ? DomUtils.getText(titleElem) : "Başlıksız Blog";
+        
+        if (titleElem) {
+            DomUtils.removeElement(titleElem); // Heading1 başlığını içerikten kaldır
+        }
+
+        // Tüm paragraflara font-size artırma işlemi ekle
+        const paragraphs = DomUtils.findAll(elem => elem.name === 'p', dom.children);
+        paragraphs.forEach(p => {
+            p.attribs.style = (p.attribs.style || '') + 'font-size:18px;'; // Font size artır
+        });
+
+        // Boşluk ve hizalamaları koruma (Madde işaretleri, numaralı listeler için)
+        const lists = DomUtils.findAll(elem => ['ul', 'ol'].includes(elem.name), dom.children);
+        lists.forEach(list => {
+            list.attribs.style = (list.attribs.style || '') + 'margin-left: 40px;'; // Liste öğelerine hizalama ekle
+        });
+
+        // Firebase'e yüklenen görselleri değiştirme işlemi
+        const images = DomUtils.findAll(elem => elem.name === 'img', dom.children);
         for (let img of images) {
             const imageBuffer = Buffer.from(img.attribs.src.replace(/^data:image\/\w+;base64,/, ""), 'base64');
             const imageName = `contentImages/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.png`;
@@ -197,23 +228,19 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
             const snapshot = await uploadBytes(storageRef, imageBuffer);
             const imageUrl = await getDownloadURL(snapshot.ref);
 
-            img.attribs.src = imageUrl; // Firebase URL ile değiştir
+            img.attribs.src = imageUrl; // Kaynak URL'sini Firebase URL'si ile değiştir
         }
 
         // Güncellenmiş HTML içeriğini al
         const updatedHtmlContent = DomUtils.getOuterHTML(dom);
 
-        // İlk h1 etiketini başlık olarak al
-        const titleElem = DomUtils.findOne(elem => elem.name === 'h1', dom.children);
-        const title = titleElem ? DomUtils.getText(titleElem) : "Başlıksız Blog";
-
-        // Supabase'e kaydet
+        // Supabase'e blog kaydet
         const { data, error } = await supabase.from("BlogPosts").insert([
             {
                 title,
                 content: updatedHtmlContent,
                 created_by: "Mehmet Aker",
-                cover_image_url: coverImageUrl, // Kapak fotoğrafı URL'sini ekle
+                cover_image_url: coverImageUrl,
             },
         ]);
 
