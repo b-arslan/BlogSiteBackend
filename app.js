@@ -41,48 +41,9 @@ app.get("/api/blogposts", async (req, res) => {
         });
         return;
     }
-
-    // Firebase URL'si yerine proxy URL'sini döndür
-    const modifiedData = data.map(blog => {
-        if (blog.cover_image_url) {
-            try {
-                // URL'yi tam olarak parse etmek için geçerli bir base URL kullanın
-                const urlPath = new URL(blog.cover_image_url, 'http://example.com').pathname; // Base URL gerekli
-                const decodedPath = decodeURIComponent(urlPath); // URL'yi decode et
-                const imageName = decodedPath.split('/').pop(); // Sadece dosya adını al
-                blog.cover_image_url = `/images/${imageName}`; // Proxy edilen URL
-            } catch (err) {
-                console.error("URL parsing error:", err);
-                blog.cover_image_url = null; // Hata durumunda URL'yi null yap
-            }
-        }
-        return blog;
-    });
-
+    
     res.setHeader('Cache-Control', 'no-store');
-    res.status(200).json({ success: true, message: 'Veriler başarıyla getirildi.', content: modifiedData });
-});
-
-app.get("/images/:filename", async (req, res) => {
-    const filename = req.params.filename;
-    const storageRef = ref(storage, `coverImages/${filename}`);
-
-    try {
-        const downloadUrl = await getDownloadURL(storageRef);
-        const response = await fetch(downloadUrl);
-        
-        // Content-Type'ı response'tan alıyoruz
-        const contentType = response.headers.get('content-type') || 'image/jpeg'; // Default content-type
-        
-        // Görsel verisini buffer olarak alıyoruz
-        const imageBuffer = await response.buffer();
-
-        // Dinamik olarak Content-Type ayarla (image/jpeg, image/png, vb.)
-        res.setHeader('Content-Type', contentType);
-        res.send(imageBuffer);
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Image could not be retrieved", error: error.message });
-    }
+    res.status(200).json({ success: true, content: data });
 });
 
 app.post("/api/login", async (req, res) => {
