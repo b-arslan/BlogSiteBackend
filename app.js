@@ -186,7 +186,7 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
             buffer: wordFile.buffer,
             styleMap: [
                 "p => p:fresh",  // Paragrafları HTML p tagine çevir
-                "h1 => h1:fresh", // Heading1'i al, ama içerikte temizleyeceğiz
+                "h1 => h1:fresh", // Heading1'i al, ama içerikten temizleyeceğiz
                 "ul => ul:fresh", // Madde işaretli listeler
                 "ol => ol:fresh", // Numaralı listeler
                 "li => li:fresh", // Liste öğeleri
@@ -206,16 +206,20 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
             DomUtils.removeElement(titleElem); // Heading1 başlığını içerikten kaldır
         }
 
-        // Tüm paragraflara font-size artırma işlemi ekle
+        // Paragraflar ve boş satırların hizalanması
         const paragraphs = DomUtils.findAll(elem => elem.name === 'p', dom.children);
         paragraphs.forEach(p => {
+            // Boş satırları ve paragraf aralarındaki boşlukları koruma
+            if (DomUtils.getText(p).trim() === '') {
+                p.attribs.style = (p.attribs.style || '') + 'min-height:20px;'; // Boş satırlar için minimum height ekle
+            }
             p.attribs.style = (p.attribs.style || '') + 'font-size:18px;'; // Font size artır
         });
 
         // Boşluk ve hizalamaları koruma (Madde işaretleri, numaralı listeler için)
         const lists = DomUtils.findAll(elem => ['ul', 'ol'].includes(elem.name), dom.children);
         lists.forEach(list => {
-            list.attribs.style = (list.attribs.style || '') + 'margin-left: 40px;'; // Liste öğelerine hizalama ekle
+            list.attribs.style = (list.attribs.style || '') + 'margin-left: 40px; font-size:18px;'; // Liste öğelerine hizalama ve font size ekle
         });
 
         // Firebase'e yüklenen görselleri değiştirme işlemi
