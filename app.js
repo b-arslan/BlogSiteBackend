@@ -259,4 +259,54 @@ app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFi
     }
 });
 
+app.post("/api/blogposts/:id/view", async (req, res) => {
+    const { id } = req.params;  // URL'den blog id'sini alıyoruz
+
+    try {
+        // Blog'u seçip view_count'u artırıyoruz
+        const { data, error: selectError } = await supabase
+            .from("BlogPosts")
+            .select("view_count")
+            .eq("id", id)
+            .single();  // Tek blog döndürsün
+
+        if (selectError) {
+            return res.status(404).json({
+                success: false,
+                message: "Blog bulunamadı",
+                error: selectError.message,
+            });
+        }
+
+        // Mevcut view_count'u alıyoruz ve artırıyoruz
+        const currentViewCount = data.view_count || 0; // Eğer view_count yoksa 0 varsayıyoruz
+        const updatedViewCount = currentViewCount + 1;
+
+        // Blog'u güncelliyoruz
+        const { error: updateError } = await supabase
+            .from("BlogPosts")
+            .update({ view_count: updatedViewCount })
+            .eq("id", id);
+
+        if (updateError) {
+            return res.status(500).json({
+                success: false,
+                message: "Görüntüleme sayısı artırılamadı",
+                error: updateError.message,
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `Blog görüntüleme sayısı başarıyla artırıldı. Yeni görüntüleme sayısı: ${updatedViewCount}`,
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            message: "Görüntüleme sayısı artırılırken bir hata oluştu",
+            error: err.message,
+        });
+    }
+});
+
 module.exports = app;
