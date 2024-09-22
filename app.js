@@ -68,7 +68,7 @@ app.post("/api/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, hashedPassword);
 
     if (!isMatch) {
-        res.status(401).json({ success: false, message: "Şifre yanlış" });
+        res.status(404).json({ success: false, message: "Şifre yanlış" });
         return;
     }
 
