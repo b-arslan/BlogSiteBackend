@@ -309,4 +309,31 @@ app.post("/api/blogposts/:id/view", async (req, res) => {
     }
 });
 
+app.post('/api/contact', async (req, res) => {
+    const { name, email, content } = req.body;
+
+    if (!name || !email || !content) {
+        return res.status(400).json({success: false, message: 'Lütfen alanları kontrol edin'});
+    }
+
+    try {
+        const response = await axios.post('https://api.web3forms.com/submit', {
+            access_key: process.env.WEB3FORMS_PUBLIC_KEY,
+            name: name,
+            email: email,
+            message: content,
+            subject: 'Blog Sitesinden Yeni E-posta',
+            to: 'krawrld@gmail.com'
+        });
+
+        if (response.data.success) {
+            return res.status(200).json({success: true, message: 'E-posta başarıyla gönderildi!'});
+        } else {
+            return res.status(500).json({success: false, message: 'E-posta gönderilirken hata oluştu'});
+        }
+    } catch (err) {
+        return res.status(500).json({success: false, message: 'Teknik Hata'});
+    }
+});
+
 module.exports = app;
