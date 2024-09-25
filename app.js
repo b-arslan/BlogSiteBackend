@@ -332,6 +332,7 @@ app.post('/api/contact', async (req, res) => {
             return res.status(500).json({success: false, message: 'E-posta gönderilirken hata oluştu'});
         }
     } catch (err) {
+        console.error(err);
         return res.status(500).json({success: false, message: 'Teknik Hata'});
     }
 });
