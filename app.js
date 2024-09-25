@@ -324,7 +324,7 @@ app.post('/api/contact', async (req, res) => {
             email: email,
             message: content,
             subject: 'Blog Sitesinden Yeni E-posta',
-            to: 'krawrld@gmail.com'
+            to: 'bugraarslan5@outlook.com'
         });
 
         console.log(response.data);
