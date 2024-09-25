@@ -327,6 +327,8 @@ app.post('/api/contact', async (req, res) => {
             to: 'krawrld@gmail.com'
         });
 
+        console.log(response.data);
+
         if (response.data.success) {
             return res.status(200).json({success: true, message: 'E-posta başarıyla gönderildi!'});
         } else {
