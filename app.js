@@ -318,21 +318,30 @@ app.post('/api/contact', async (req, res) => {
     }
 
     try {
-        const response = await axios.post('https://api.submitjson.com/v1/submit/PpsamFMN8', {
-            access_key: process.env.WEB3FORMS_PUBLIC_KEY,
-            name: name,
-            email: email,
-            message: content,
-            powerLevel: 9001,
+        const response = await axios.post(`https://api.submitjson.com/v1/submit/${process.env.WEB3FORMS_API_URL}`, {
+            data: {
+                name: name,
+                email: email,
+                message: content,
+                powerLevel: 9001
+            },
             options: {
                 emailSubject: 'Blog Sitesinden Yeni E-posta',
-                emailTo: 'bugraarslan5@outlook.com',
+                emailTo: 'psikolog@mehmetaker.com',
+                emailNotification: false,
+                submissionFormat: 'raw',
+            }
+        }, 
+        {
+            headers: {
+                'content-type': 'application/json',
+                'X-API-Key': process.env.WEB3FORMS_PUBLIC_KEY
             }
         });
 
         console.log(response.data);
 
-        if (response.data.success) {
+        if (response.status === 201 || response.status === 200) {
             return res.status(200).json({success: true, message: 'E-posta başarıyla gönderildi!'});
         } else {
             return res.status(500).json({success: false, message: 'E-posta gönderilirken hata oluştu'});
