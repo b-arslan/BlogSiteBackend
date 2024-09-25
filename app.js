@@ -318,13 +318,16 @@ app.post('/api/contact', async (req, res) => {
     }
 
     try {
-        const response = await axios.post('https://api.web3forms.com/submit', {
+        const response = await axios.post('https://api.submitjson.com/v1/submit/PpsamFMN8', {
             access_key: process.env.WEB3FORMS_PUBLIC_KEY,
             name: name,
             email: email,
             message: content,
-            subject: 'Blog Sitesinden Yeni E-posta',
-            to: 'bugraarslan5@outlook.com'
+            powerLevel: 9001,
+            options: {
+                emailSubject: 'Blog Sitesinden Yeni E-posta',
+                emailTo: 'bugraarslan5@outlook.com',
+            }
         });
 
         console.log(response.data);
