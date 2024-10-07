@@ -32,7 +32,10 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.get("/api/blogposts", async (req, res) => {
-    const { data, error } = await supabase.from("BlogPosts").select("*");
+    const { data, error } = await supabase
+        .from("BlogPosts")
+        .select("*")
+        .order("created_at", { ascending: false });
 
     if (error) {
         res.status(500).json({
