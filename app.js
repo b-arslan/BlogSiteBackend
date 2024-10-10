@@ -355,4 +355,74 @@ app.post('/api/contact', async (req, res) => {
     }
 });
 
+app.post('/api/view', async (req, res) => {
+    const { visitor } = req.body;
+  
+    try {
+      // Gelen visitor_id'yi kontrol et
+      const { data: existingVisitor, error: visitorError } = await supabase
+        .from('Visitors')
+        .select('*')
+        .eq('visitor_id', visitor)
+        .single();
+  
+      if (visitorError && visitorError.code !== 'PGRST116') {
+        // Hata oluşursa ve hata, 'kayit bulunamadi' degilse hata döndür
+        throw visitorError;
+      }
+  
+      // Eğer visitor_id veritabanında varsa
+      if (existingVisitor) {
+        const lastVisitTime = new Date(existingVisitor.visit_time);
+        const currentTime = new Date();
+        const timeDifference = (currentTime - lastVisitTime) / (1000 * 60 * 60 * 24); // Günü hesapla
+  
+        if (timeDifference > 1) {
+          // Eğer son ziyaret 1 günden fazlaysa, view değerini arttır
+          const { error: updateError } = await supabase
+            .from('Visitors')
+            .update({ view: existingVisitor.view + 1, visit_time: currentTime })
+            .eq('visitor_id', visitor);
+  
+          if (updateError) {
+            throw updateError;
+          }
+        }
+        // Eğer 1 günden az ise, hiçbir şey yapma
+      } else {
+        // Eğer visitor_id veritabanında yoksa, yeni bir kayıt oluştur
+        const { error: insertError } = await supabase
+          .from('Visitors')
+          .insert([{ visitor_id: visitor, visit_time: new Date(), view: 1 }]);
+  
+        if (insertError) {
+          throw insertError;
+        }
+      }
+  
+      res.status(200).json({ message: 'Operation successful' });
+    } catch (error) {
+      console.error('Error processing view:', error);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
+
+app.get('/api/getViews', async (req, res) => {
+    const { data, error } = await supabase
+        .from("Visitors")
+        .select("*")
+
+    if (error) {
+        res.status(500).json({
+            success: false,
+            message: "Görüntülenme verileri alınırken hata oluştu",
+            error: error.message,
+        });
+        return;
+    }
+    
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).json({ success: true, content: data });
+});
+
 module.exports = app;
