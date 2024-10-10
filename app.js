@@ -410,7 +410,6 @@ app.post('/api/view', async (req, res) => {
   }
 });
 
-
 app.get('/api/getViews', async (req, res) => {
     const { data, error } = await supabase
         .from("Visitors")
