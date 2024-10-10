@@ -399,10 +399,11 @@ app.post('/api/view', async (req, res) => {
           throw insertError;
         }
       }
-  
+      res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({ message: 'Operation successful' });
     } catch (error) {
       console.error('Error processing view:', error);
+      res.setHeader('Cache-Control', 'no-store');
       res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 });
