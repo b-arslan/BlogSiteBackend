@@ -10,6 +10,8 @@ const mammoth = require("mammoth");
 const { parseDocument } = require("htmlparser2");
 const { DomUtils } = require("htmlparser2");
 const axios = require('axios');
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./swaggerConfig");
 
 
 const app = express();
@@ -31,6 +33,20 @@ const upload = multer({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+
+app.use("/documentation", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+/**
+ * @openapi
+ * /api/blogposts:
+ *   get:
+ *     summary: Retrieve all blog posts
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved blog posts.
+ *       500:
+ *         description: Internal server error.
+ */
 app.get("/api/blogposts", async (req, res) => {
     const { data, error } = await supabase
         .from("BlogPosts")
@@ -50,6 +66,28 @@ app.get("/api/blogposts", async (req, res) => {
     res.status(200).json({ success: true, content: data });
 });
 
+/**
+ * @openapi
+ * /api/login:
+ *   post:
+ *     summary: User login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successfully logged in.
+ *       404:
+ *         description: User not found or incorrect password.
+ */
 app.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -80,6 +118,33 @@ app.post("/api/login", async (req, res) => {
     res.status(200).json({ success: true, message: "Başarıyla giriş yapıldı" });
 });
 
+/**
+ * @openapi
+ * /api/blog:
+ *   post:
+ *     summary: Create a new blog post
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               author:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               coverImage:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Blog post successfully created.
+ *       500:
+ *         description: Blog post creation failed.
+ */
 app.post("/api/blog", upload.fields([{ name: 'coverImage' }/*, { name: 'video' }*/]), async (req, res) => {
     const { title, author, content } = req.body;
     const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
@@ -158,8 +223,54 @@ app.post("/api/upload-image", upload.single("image"), async (req, res) => {
 });
 
 
-// New route to handle Word document uploads and processing
+/**
+ * @openapi
+ * /api/wordBlog:
+ *   post:
+ *     summary: Create a blog post from a Word document
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               coverImage:
+ *                 type: string
+ *                 format: binary
+ *               wordFile:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Blog post successfully created from Word document.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     title:
+ *                       type: string
+ *                     content:
+ *                       type: string
+ *                     created_by:
+ *                       type: string
+ *                     cover_image_url:
+ *                       type: string
+ *       400:
+ *         description: No Word document provided.
+ *       500:
+ *         description: Internal server error.
+ */
 app.post("/api/wordBlog", upload.fields([{ name: 'coverImage' }, { name: 'wordFile' }]), async (req, res) => {
+    // New route to handle Word document uploads and processing
     const wordFile = req.files['wordFile'] ? req.files['wordFile'][0] : null;
     const coverImage = req.files['coverImage'] ? req.files['coverImage'][0] : null;
 
@@ -313,6 +424,30 @@ app.post("/api/blogposts/:id/view", async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/contact:
+ *   post:
+ *     summary: Send a contact form
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Email sent successfully.
+ *       500:
+ *         description: Email sending failed.
+ */
 app.post('/api/contact', async (req, res) => {
     const { name, email, content } = req.body;
 
@@ -355,6 +490,26 @@ app.post('/api/contact', async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/view:
+ *   post:
+ *     summary: Add or update visitor information
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               visitor:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Operation successful.
+ *       500:
+ *         description: Internal server error.
+ */
 app.post('/api/view', async (req, res) => {
   const { visitor } = req.body;
 
@@ -410,6 +565,36 @@ app.post('/api/view', async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/getViews:
+ *   get:
+ *     summary: Retrieve all visitor views
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved visitor views.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 content:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       visitor_id:
+ *                         type: string
+ *                       view:
+ *                         type: integer
+ *                       visit_time:
+ *                         type: string
+ *                         format: date-time
+ *       500:
+ *         description: Internal server error.
+ */
 app.get('/api/getViews', async (req, res) => {
     const { data, error } = await supabase
         .from("Visitors")
