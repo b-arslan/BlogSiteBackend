@@ -1,22 +1,37 @@
 {
     "version": 2,
     "builds": [
-      {
-        "src": "app.js",
-        "use": "@vercel/node"
-      }
+        {
+            "src": "app.js",
+            "use": "@vercel/node"
+        }
     ],
     "routes": [
-      {
-        "src": "/api/(.*)",
-        "dest": "app.js",
-        "headers": {
-          "Cache-Control": "no-store"
+        {
+            "src": "/api/(.*)",
+            "dest": "app.js",
+            "headers": {
+                "Cache-Control": "no-store"
+            }
+        },
+        {
+            "src": "/documentation",
+            "dest": "app.js"
+        },
+        {
+            "src": "/(.*)",
+            "dest": "app.js"
         }
-      },
-      {
-        "src": "/(.*)",
-        "dest": "app.js"
-      }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "Cache-Control",
+                    "value": "no-store"
+                }
+            ]
+        }
     ]
-}  
+}
