@@ -47,11 +47,64 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  * /api/blogposts:
  *   get:
  *     summary: Retrieve all blog posts
+ *     parameters:
+ *       - in: header
+ *         name: 1  # Zorunlu olan header
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: A required header for accessing the API.
  *     responses:
  *       200:
  *         description: Successfully retrieved blog posts.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 content:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "1"
+ *                       title:
+ *                         type: string
+ *                         example: "Sample Blog Title"
+ *                       created_by:
+ *                         type: string
+ *                         example: "Mehmet Aker"
+ *                       content:
+ *                         type: string
+ *                         example: "This is a sample blog content."
+ *                       cover_image_url:
+ *                         type: string
+ *                         example: "https://example.com/image.jpg"
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                         example: "2024-10-28T10:00:00Z"
  *       500:
  *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: "Blog verileri alınırken hata oluştu"
+ *                 error:
+ *                   type: string
+ *                   example: "Database connection error"
  */
 app.get("/api/blogposts", async (req, res) => {
     const { data, error } = await supabase
@@ -125,7 +178,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 /**
- * @openapi
+ * 
  * /api/blog:
  *   post:
  *     summary: Create a new blog post
@@ -230,7 +283,7 @@ app.post("/api/upload-image", upload.single("image"), async (req, res) => {
 
 
 /**
- * @openapi
+ * 
  * /api/wordBlog:
  *   post:
  *     summary: Create a blog post from a Word document
@@ -431,7 +484,7 @@ app.post("/api/blogposts/:id/view", async (req, res) => {
 });
 
 /**
- * @openapi
+ * 
  * /api/contact:
  *   post:
  *     summary: Send a contact form
@@ -497,7 +550,7 @@ app.post('/api/contact', async (req, res) => {
 });
 
 /**
- * @openapi
+ * 
  * /api/view:
  *   post:
  *     summary: Add or update visitor information
@@ -619,4 +672,7 @@ app.get('/api/getViews', async (req, res) => {
     res.status(200).json({ success: true, content: data });
 });
 
-module.exports = app;
+// module.exports = app;
+app.listen(9001, () => {
+    console.log(`Example app listening on port ${9001}`)
+})

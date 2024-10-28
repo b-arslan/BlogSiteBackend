@@ -9,7 +9,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: 'https://your-vercel-backend.vercel.app', // Vercel URL'iniz
+      url: process.env.BLOG_API_URL,
       description: 'Vercel Deployment',
     },
   ],
@@ -17,7 +17,7 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: ['./index.js'], // Endpoint'lerinizi barındıran dosyanın yolunu ekleyin
+  apis: ['./app.js'], // Endpoint'lerinizi barındıran dosyanın yolunu ekleyin
 };
 
 const swaggerSpec = swaggerJSDoc(options);
