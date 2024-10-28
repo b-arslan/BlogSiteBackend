@@ -20,7 +20,13 @@ app.use(express.json());
 //   origin: ['http://localhost:3000', 'https://www.mehmetaker.com'], // allow localhost for development
 //   optionsSuccessStatus: 200
 // };
-app.use(cors());
+// app.use(cors());
+const corsOptions = {
+    origin: '*',
+    optionsSuccessStatus: 200,
+};
+  
+app.use(cors(corsOptions));
 
 // ETag disabled
 app.disable('etag');
