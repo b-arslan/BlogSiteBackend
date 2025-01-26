@@ -672,6 +672,64 @@ app.get('/api/getViews', async (req, res) => {
     res.status(200).json({ success: true, content: data });
 });
 
+
+
+
+
+
+/*
+
+VALO
+
+*/
+
+// IP ve Konum API'si
+const GEOLOCATION_API = "https://ipinfo.io";
+
+app.post("/api/v1/valorant/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        // Kullanıcıyı Supabase'den username ile al
+        const { data: user, error } = await supabase
+            .from("ValorantUsers")
+            .select("id, password")
+            .eq("username", username)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
+        }
+
+        // Şifre kontrolü
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "Şifre yanlış" });
+        }
+
+        // Kullanıcının IP ve Konum Bilgisi
+        const ipAddress = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        let location = "Unknown Location";
+
+        try {
+            const locationResponse = await axios.get(`${GEOLOCATION_API}/${ipAddress}/json`);
+            location = `${locationResponse.data.city || "Unknown"}, ${locationResponse.data.country || "Unknown"}`;
+        } catch (geoError) {
+            console.error("Geolocation API Error:", geoError.message);
+        }
+
+        // Login log kaydet
+        await supabase.from("LoginLogs").insert([
+            { user_id: user.id, ip_address: ipAddress, location }
+        ]);
+
+        return res.status(200).json({ success: true, message: "Başarıyla giriş yapıldı" });
+    } catch (error) {
+        console.error("Login Error:", error);
+        return res.status(500).json({ success: false, message: "Giriş işlemi başarısız", error: error.message });
+    }
+});
+
 // module.exports = app;
 app.listen(9001, () => {
     console.log(`Example app listening on port ${9001}`)
