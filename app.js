@@ -690,44 +690,27 @@ app.post("/api/v1/valorant/login", async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Kullanıcıyı Supabase'den username ile al
+        // Kullanıcıyı bul
         const { data: user, error } = await supabase
-            .from("valorantusers")
-            .select("id, password")
+            .from("ValorantUsers")
+            .select("id, username, password")
             .eq("username", username)
             .single();
 
         if (error || !user) {
-            console.error("Supabase Hatası:", error);
             return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
         }
 
-        // Şifre kontrolü
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
+        // Şifreyi doğrudan kontrol et
+        if (user.password !== password) {
             return res.status(401).json({ success: false, message: "Şifre yanlış" });
         }
 
-        // Kullanıcının IP ve Konum Bilgisi
-        const ipAddress = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-        let location = "Unknown Location";
-
-        try {
-            const locationResponse = await axios.get(`${GEOLOCATION_API}/${ipAddress}/json`);
-            location = `${locationResponse.data.city || "Unknown"}, ${locationResponse.data.country || "Unknown"}`;
-        } catch (geoError) {
-            console.error("Geolocation API Error:", geoError.message);
-        }
-
-        // Login log kaydet
-        await supabase.from("loginlogs").insert([
-            { user_id: user.id, ip_address: ipAddress, location }
-        ]);
-
+        // Giriş başarılı
         return res.status(200).json({ success: true, message: "Başarıyla giriş yapıldı" });
     } catch (error) {
-        console.error("Login Error:", error);
-        return res.status(500).json({ success: false, message: "Giriş işlemi başarısız", error: error.message });
+        console.error("Hata:", error.message);
+        return res.status(500).json({ success: false, message: "Bir hata oluştu" });
     }
 });
 
