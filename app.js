@@ -730,6 +730,26 @@ app.post("/api/v1/valorant/login", async (req, res) => {
     }
 });
 
+app.get("/api/v1/valorant/videos", async (req, res) => {
+    try {
+        // Supabase'den videoları çek
+        const { data: videos, error } = await supabase
+            .from("Videos")
+            .select("id, title, embed_link")
+            .order("created_at", { ascending: false }); // Tarihe göre sıralama
+
+        if (error) {
+            console.error("Veritabanı Hatası:", error.message);
+            return res.status(500).json({ success: false, message: "Videolar alınamadı." });
+        }
+
+        res.status(200).json({ success: true, videos });
+    } catch (error) {
+        console.error("Server Hatası:", error.message);
+        res.status(500).json({ success: false, message: "Bir hata oluştu." });
+    }
+});
+
 // module.exports = app;
 app.listen(9001, () => {
     console.log(`Example app listening on port ${9001}`)
