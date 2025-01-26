@@ -692,7 +692,7 @@ app.post("/api/v1/valorant/login", async (req, res) => {
     try {
         // Kullanıcıyı bul
         const { data: user, error } = await supabase
-            .from("ValorantUsers")
+            .from("valorantusers") // Tablo adı tamamen küçük harfle yazılmış (Supabase genelde bu şekilde çalışır)
             .select("id, username, password")
             .eq("username", username)
             .single();
@@ -701,15 +701,15 @@ app.post("/api/v1/valorant/login", async (req, res) => {
             return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
         }
 
-        // Şifreyi doğrudan kontrol et
+        // Şifre kontrolü
         if (user.password !== password) {
             return res.status(401).json({ success: false, message: "Şifre yanlış" });
         }
 
-        // Giriş başarılı
+        // Başarılı giriş
         return res.status(200).json({ success: true, message: "Başarıyla giriş yapıldı" });
-    } catch (error) {
-        console.error("Hata:", error.message);
+    } catch (err) {
+        console.error("Hata:", err.message);
         return res.status(500).json({ success: false, message: "Bir hata oluştu" });
     }
 });
