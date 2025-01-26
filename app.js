@@ -692,12 +692,13 @@ app.post("/api/v1/valorant/login", async (req, res) => {
     try {
         // Kullanıcıyı Supabase'den username ile al
         const { data: user, error } = await supabase
-            .from("ValorantUsers")
+            .from("valorantusers")
             .select("id, password")
             .eq("username", username)
             .single();
 
         if (error || !user) {
+            console.error("Supabase Hatası:", error);
             return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
         }
 
@@ -719,7 +720,7 @@ app.post("/api/v1/valorant/login", async (req, res) => {
         }
 
         // Login log kaydet
-        await supabase.from("LoginLogs").insert([
+        await supabase.from("loginlogs").insert([
             { user_id: user.id, ip_address: ipAddress, location }
         ]);
 
@@ -734,7 +735,7 @@ app.get("/api/v1/valorant/videos", async (req, res) => {
     try {
         // Supabase'den videoları çek
         const { data: videos, error } = await supabase
-            .from("Videos")
+            .from("videos")
             .select("id, title, embed_link")
             .order("created_at", { ascending: false }); // Tarihe göre sıralama
 
