@@ -687,12 +687,11 @@ VALO
 const GEOLOCATION_API = "https://ipinfo.io";
 
 app.post("/api/v1/valorant/login", async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, ip, location } = req.body;
 
     try {
-        // Kullanıcıyı bul
         const { data: user, error } = await supabase
-            .from("valorantusers") // Tablo adı tamamen küçük harfle yazılmış (Supabase genelde bu şekilde çalışır)
+            .from("valorantusers")
             .select("id, username, password")
             .eq("username", username)
             .single();
@@ -701,9 +700,23 @@ app.post("/api/v1/valorant/login", async (req, res) => {
             return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
         }
 
-        // Şifre kontrolü
         if (user.password !== password) {
             return res.status(401).json({ success: false, message: "Şifre yanlış" });
+        }
+
+        const { error: insertError } = await supabase
+            .from("loginlogs")
+            .insert([
+                {
+                    ip_address: ip,
+                    location: location, 
+                    login_time: new Date().toISOString(),
+                },
+            ]);
+
+        if (insertError) {
+            console.error("Giriş kaydı hatası:", insertError.message);
+            return res.status(500).json({ success: false, message: "Giriş kaydedilemedi" });
         }
 
         // Başarılı giriş
@@ -713,6 +726,7 @@ app.post("/api/v1/valorant/login", async (req, res) => {
         return res.status(500).json({ success: false, message: "Bir hata oluştu" });
     }
 });
+
 
 app.get("/api/v1/valorant/videos", async (req, res) => {
     try {
