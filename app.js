@@ -690,6 +690,7 @@ app.post("/api/v1/valorant/login", async (req, res) => {
     const { username, password, ip, location } = req.body;
 
     try {
+        // Kullanıcıyı bul
         const { data: user, error } = await supabase
             .from("valorantusers")
             .select("id, username, password")
@@ -700,23 +701,45 @@ app.post("/api/v1/valorant/login", async (req, res) => {
             return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı" });
         }
 
+        // Şifre kontrolü
         if (user.password !== password) {
             return res.status(401).json({ success: false, message: "Şifre yanlış" });
         }
 
-        const { error: insertError } = await supabase
+        // IP adresi zaten var mı kontrol et
+        const { data: existingLog } = await supabase
             .from("loginlogs")
-            .insert([
-                {
-                    ip_address: ip,
-                    location: location, 
-                    login_time: new Date().toISOString(),
-                },
-            ]);
+            .select("ip_address")
+            .eq("ip_address", ip)
+            .single();
 
-        if (insertError) {
-            console.error("Giriş kaydı hatası:", insertError.message);
-            return res.status(500).json({ success: false, message: "Giriş kaydedilemedi" });
+        if (existingLog) {
+            // Eğer kayıt varsa, sadece `login_time` güncelle
+            const { error: updateError } = await supabase
+                .from("loginlogs")
+                .update({ login_time: new Date().toISOString() })
+                .eq("ip_address", ip);
+
+            if (updateError) {
+                console.error("Giriş güncelleme hatası:", updateError.message);
+                return res.status(500).json({ success: false, message: "Giriş kaydı güncellenemedi" });
+            }
+        } else {
+            // Eğer kayıt yoksa yeni kayıt ekle
+            const { error: insertError } = await supabase
+                .from("loginlogs")
+                .insert([
+                    {
+                        ip_address: ip,
+                        location: location,
+                        login_time: new Date().toISOString(),
+                    },
+                ]);
+
+            if (insertError) {
+                console.error("Giriş kaydı ekleme hatası:", insertError.message);
+                return res.status(500).json({ success: false, message: "Giriş kaydı eklenemedi" });
+            }
         }
 
         // Başarılı giriş
@@ -726,6 +749,7 @@ app.post("/api/v1/valorant/login", async (req, res) => {
         return res.status(500).json({ success: false, message: "Bir hata oluştu" });
     }
 });
+
 
 
 app.get("/api/v1/valorant/videos", async (req, res) => {
