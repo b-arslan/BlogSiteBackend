@@ -672,7 +672,28 @@ app.get('/api/getViews', async (req, res) => {
     res.status(200).json({ success: true, content: data });
 });
 
+app.delete("/api/deleteBlog/:id", async (req, res) => {
+    const { id } = req.params;
 
+    const { data, error } = await supabase
+        .from("BlogPosts")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Blog silinirken hata oluştu",
+            error: error.message,
+        });
+    }
+
+    return res.status(200).json({
+        success: true,
+        message: "Blog başarıyla silindi",
+        deleted: data,
+    });
+});
 
 
 
