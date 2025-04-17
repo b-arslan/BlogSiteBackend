@@ -1,22 +1,15 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "app.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "app.js",
-      "headers": {
-        "Cache-Control": "no-store"
+    "version": 2,
+    "builds": [
+      {
+        "src": "app.js",
+        "use": "@vercel/node"
       }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "app.js"
-    }
-  ]
+    ],
+    "routes": [
+      {
+        "src": "/api/(.*)",
+        "dest": "app.js"
+      }
+    ]
 }  
