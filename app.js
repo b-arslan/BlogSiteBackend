@@ -12,8 +12,8 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // CORS
 const corsOptions = {
-  origin: "*",
-  optionsSuccessStatus: 200,
+    origin: "*",
+    optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 

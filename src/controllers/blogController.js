@@ -106,7 +106,7 @@ const addWordBlog = async (req, res) => {
         {
           title,
           content: html,
-          created_by: "Mehmet Aker", // İleride kullanıcı giriş sistemiyle değiştirilebilir
+          created_by: "Mehmet Aker",
           cover_image_url: coverImageUrl,
         },
       ]);

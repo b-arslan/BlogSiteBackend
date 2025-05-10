@@ -1,0 +1,13 @@
+name: Keep Supabase Awake
+
+on:
+    schedule:
+        - cron: "0 1 * * *"
+    workflow_dispatch:
+
+jobs:
+    ping:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Send GET request to ping Supabase
+              run: curl -s -o /dev/null -w "%{http_code}" https://blog-site-backend-ebon.vercel.app/api/blog/ping

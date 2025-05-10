@@ -1,5 +1,5 @@
-const { ref, uploadBytes, getDownloadURL } = require('firebase/storage');
-const { storage } = require('../../config/firebase');
+const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
+const { storage } = require("../../config/firebase");
 
 const uploadImage = async (req, res) => {
     const image = req.file;
