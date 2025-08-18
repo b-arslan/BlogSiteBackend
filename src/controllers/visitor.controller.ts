@@ -1,7 +1,11 @@
-const supabase = require("../../config/supabase");
+import { Request, Response } from "express";
+import supabase from "../config/supabase";
 
-const handleVisitorView = async (req, res) => {
-    const { visitor } = req.body;
+export const handleVisitorView = async (
+    req: Request,
+    res: Response
+): Promise<Response> => {
+    const { visitor }: { visitor: string } = req.body;
 
     try {
         const { data: existingVisitor, error: visitorError } = await supabase
@@ -9,16 +13,17 @@ const handleVisitorView = async (req, res) => {
             .select("*")
             .eq("visitor_id", visitor)
             .single();
-
         if (visitorError && visitorError.code !== "PGRST116") {
             throw visitorError;
         }
 
+        const currentTime = new Date();
+
         if (existingVisitor) {
             const lastVisitTime = new Date(existingVisitor.visit_time);
-            const currentTime = new Date();
             const timeDifference =
-                (currentTime - lastVisitTime) / (1000 * 60 * 60 * 24); // Gün
+                (currentTime.getTime() - lastVisitTime.getTime()) /
+                (1000 * 60 * 60 * 24); // gün
 
             if (timeDifference > 1) {
                 const { error: updateError } = await supabase
@@ -37,7 +42,11 @@ const handleVisitorView = async (req, res) => {
             const { error: insertError } = await supabase
                 .from("Visitors")
                 .insert([
-                    { visitor_id: visitor, visit_time: new Date(), view: 1 },
+                    {
+                        visitor_id: visitor,
+                        visit_time: currentTime,
+                        view: 1,
+                    },
                 ]);
 
             if (insertError) {
@@ -47,7 +56,7 @@ const handleVisitorView = async (req, res) => {
 
         res.setHeader("Cache-Control", "no-store");
         return res.status(200).json({ message: "Operation successful" });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error processing view:", error);
         res.setHeader("Cache-Control", "no-store");
         return res
@@ -56,7 +65,10 @@ const handleVisitorView = async (req, res) => {
     }
 };
 
-const getAllViews = async (req, res) => {
+export const getAllViews = async (
+    req: Request,
+    res: Response
+): Promise<Response> => {
     try {
         const { data, error } = await supabase.from("Visitors").select("*");
 
@@ -70,7 +82,7 @@ const getAllViews = async (req, res) => {
 
         res.setHeader("Cache-Control", "no-store");
         return res.status(200).json({ success: true, content: data });
-    } catch (err) {
+    } catch (err: any) {
         return res.status(500).json({
             success: false,
             message: "Sunucu hatası oluştu",
@@ -78,5 +90,3 @@ const getAllViews = async (req, res) => {
         });
     }
 };
-
-module.exports = { handleVisitorView, getAllViews };

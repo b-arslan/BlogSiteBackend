@@ -1,15 +1,16 @@
-const supabase = require("../../config/supabase");
-const bcrypt = require("bcrypt");
+import { Request, Response } from "express";
+import supabase from "../config/supabase";
+import bcrypt from "bcrypt";
 
-const login = async (req, res) => {
-    const { email, password } = req.body;
+export const login = async (req: Request, res: Response): Promise<Response> => {
+    const { email, password }: { email: string; password: string } = req.body;
 
     const { data, error } = await supabase
         .from("adminusers")
         .select("password")
         .eq("email", email);
 
-    if (error || data.length === 0) {
+    if (error || !data || data.length === 0) {
         return res.status(404).json({
             success: false,
             message: "Kullanıcı bulunamadı",
@@ -17,8 +18,8 @@ const login = async (req, res) => {
         });
     }
 
-    const hashedPassword = data[0].password;
-    const isMatch = await bcrypt.compare(password, hashedPassword);
+    const hashedPassword: string = data[0].password;
+    const isMatch: boolean = await bcrypt.compare(password, hashedPassword);
 
     if (!isMatch) {
         return res.status(404).json({
@@ -33,5 +34,3 @@ const login = async (req, res) => {
         message: "Başarıyla giriş yapıldı",
     });
 };
-
-module.exports = { login };

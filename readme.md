@@ -1,47 +1,46 @@
 # Blog Backend
 
-Bu backend Express.js kullanılarak geliştirilmiştir. Supabase ve Firebase entegrasyonları ile blog içeriği yönetimi yapılmaktadır.
+This backend is developed using Express.js and manages blog content with Supabase and Firebase integrations.
 
-## 🧠 Genel Bilgiler
-- Tüm endpoint'ler `/api` prefix'i ile başlar.
-- Firebase Storage görsel yüklemeleri için kullanılır.
-- Supabase, veritabanı işlemleri için kullanılır.
+## 🧠 General Information
+- Firebase Storage is used for image uploads.
+- Supabase is used for database operations.
 
 ---
 
-## 🔐 Auth
+## 🔐 Authentication
 
 | Method | Endpoint      | Açıklama             |
 |--------|---------------|----------------------|
-| POST   | `/api/login`  | Admin login işlemi   |
+| POST   | `/api/login`  | Admin login          |
 
 ---
 
-## 📝 Blog
+## 📝 Blog Management
 
-| Method | Endpoint                  | Açıklama                                      |
-|--------|---------------------------|-----------------------------------------------|
-| GET    | `/api/blogposts`          | Tüm blogları listele                          |
-| POST   | `/api/blog`               | Blog ekle (kapak görselli)                    |
-| POST   | `/api/wordBlog`           | Word belgesinden blog oluştur (zengin içerik) |
-| DELETE | `/api/deleteBlog/:id`     | Blog sil                                      |
-| POST   | `/api/blogposts/:id/view` | Belirli bir blogun görüntülenme sayısını artır |
+| Method | Endpoint                  | Açıklama                                               |
+|--------|---------------------------|--------------------------------------------------------|
+| GET    | `/api/blogposts`          | Retrieve all blog posts                                |
+| POST   | `/api/blog`               | Create a blog post (with cover image)                  |
+| POST   | `/api/wordBlog`           | Create a blog post from a Word document (rich content) |
+| DELETE | `/api/deleteBlog/:id`     | Delete a blog post                                     |
+| POST   | `/api/blogposts/:id/view` | Increment the view count of a specific blog post       |
 
 ---
 
-## 🖼️ Upload
+## 🖼️ Image Upload
 
 | Method | Endpoint             | Açıklama                      |
 |--------|----------------------|-------------------------------|
-| POST   | `/api/upload-image`  | İçerik görseli yükle (contentImages) |
+| POST   | `/api/upload-image`  | Upload content image          |
 
 ---
 
-## 👀 Visitor
+## 👀 Visitor Analytics
 
 | Method | Endpoint         | Açıklama                                      |
 |--------|------------------|-----------------------------------------------|
-| POST   | `/api/view`      | Ziyaretçi sayacı (her gün için 1 artış)       |
-| GET    | `/api/getViews`  | Tüm ziyaretçi kayıtlarını getir               |
+| POST   | `/api/view`      | Increment daily unique visitor count          |
+| GET    | `/api/getViews`  | Retrieve all visitor logs                     |
 
 ---

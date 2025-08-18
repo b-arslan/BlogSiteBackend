@@ -1,7 +1,15 @@
-const { ref, uploadBytes, getDownloadURL } = require("firebase/storage");
-const { storage } = require("../../config/firebase");
+import { Request, Response } from "express";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../config/firebase";
 
-const uploadImage = async (req, res) => {
+interface MulterSingleFileRequest extends Request {
+    file?: Express.Multer.File;
+}
+
+export const uploadImage = async (
+    req: MulterSingleFileRequest,
+    res: Response
+): Promise<Response> => {
     const image = req.file;
 
     if (!image) {
@@ -17,7 +25,7 @@ const uploadImage = async (req, res) => {
         const imageUrl = await getDownloadURL(snapshot.ref);
 
         return res.status(200).json({ success: true, url: imageUrl });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Firebase Storage Upload Error: ", error);
         return res.status(500).json({
             success: false,
@@ -26,5 +34,3 @@ const uploadImage = async (req, res) => {
         });
     }
 };
-
-module.exports = { uploadImage };
