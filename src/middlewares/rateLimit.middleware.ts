@@ -1,0 +1,9 @@
+import rateLimit from "express-rate-limit";
+
+export const globalRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Çok fazla istek yaptınız, lütfen daha sonra tekrar deneyin.",
+});

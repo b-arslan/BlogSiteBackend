@@ -4,12 +4,14 @@ import blogRoutes from "./routes/blog.route";
 import authRoutes from "./routes/auth.route";
 import uploadRoutes from "./routes/upload.route";
 import visitorRoutes from "./routes/visitor.route";
+import { globalRateLimiter } from "./middlewares/rateLimit.middleware";
 
 const app: Application = express();
 
 // Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(globalRateLimiter);
 
 // CORS
 const corsOptions = {
