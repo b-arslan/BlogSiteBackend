@@ -10,4 +10,4 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Send GET request to ping Supabase
-              run: curl -s -o /dev/null -w "%{http_code}" https://blog-site-backend-ebon.vercel.app/api/blogposts
+              run: curl -s -o /dev/null -w "%{http_code}" https://mehmetaker.com/api/blogposts
